@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # Banco de Dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: artist-album-db
+    environment:
+      POSTGRES_DB: artistalbum
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d artistalbum"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - artist-album-network
+
+  # MinIO - Object Storage (S3 compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: artist-album-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - artist-album-network
+
+  # MinIO Client - Create bucket on startup
+  minio-init:
+    image: minio/mc:latest
+    container_name: artist-album-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb myminio/album-covers --ignore-existing;
+      mc anonymous set download myminio/album-covers;
+      exit 0;
+      "
+    networks:
+      - artist-album-network
+
+  # Backend API - Spring Boot
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: artist-album-api
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: artistalbum
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: album-covers
+      JWT_SECRET: bWluaGEtY2hhdmUtc2VjcmV0YS1tdWl0by1zZWd1cmEtcGFyYS1qd3QtMjU2LWJpdHMtbWluaW1v
+      JWT_EXPIRATION: 300000
+      JWT_REFRESH_EXPIRATION: 86400000
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://frontend:3000
+      REGIONAL_API_URL: https://integrador-argus-api.geia.vip/v1/regionais
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health/liveness"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+    networks:
+      - artist-album-network
+
+  # Frontend - React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
+        VITE_WS_URL: http://localhost:8080/ws
+    container_name: artist-album-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - artist-album-network
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  artist-album-network:
+    driver: bridge
