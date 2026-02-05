@@ -1,4 +1,4 @@
-# 🎵 Soundify
+# Soundify
 
 Sistema Full-Stack de gerenciamento de artistas e álbuns musicais com interface moderna inspirada em aplicativos de streaming de música.
 
@@ -22,12 +22,12 @@ O **Soundify** é uma plataforma completa para gerenciamento de artistas e álbu
 
 ### Principais Funcionalidades
 
-- 🎤 CRUD completo de artistas e álbuns
-- 📀 Upload e gerenciamento de capas de álbuns via MinIO (S3-compatible)
-- 🔐 Autenticação JWT com refresh token
-- 📡 Notificações em tempo real via WebSocket
-- ⚡ Rate limiting por usuário
-- 🌐 Sincronização de dados de regionais via API externa
+- CRUD completo de artistas e álbuns
+- Upload e gerenciamento de capas de álbuns via MinIO (S3-compatible)
+- Autenticação JWT com refresh token
+- Notificações em tempo real via WebSocket
+- Rate limiting por usuário
+- Sincronização de dados de regionais via API externa
 
 ## Arquitetura
 
