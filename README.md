@@ -1,15 +1,10 @@
 # 🎵 Soundify
 
-[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://willportugal.github.io/WillianFerreiraGuimaraesPortugal057378/)
-
-🔗 **[Acesse a Demo Interativa](https://willportugal.github.io/WillianFerreiraGuimaraesPortugal057378/)**
-
 Sistema Full-Stack de gerenciamento de artistas e álbuns musicais com interface moderna inspirada em aplicativos de streaming de música.
 
 ## Índice
 
 - [Visão Geral](#visão-geral)
-- [Screenshots](#screenshots)
 - [Arquitetura](#arquitetura)
 - [Tecnologias](#tecnologias)
 - [Requisitos](#requisitos)
@@ -33,24 +28,6 @@ O **Soundify** é uma plataforma completa para gerenciamento de artistas e álbu
 - 📡 Notificações em tempo real via WebSocket
 - ⚡ Rate limiting por usuário
 - 🌐 Sincronização de dados de regionais via API externa
-
-## Screenshots
-
-### Tela de Login
-![Tela de Login](docs/screenshots/login.png)
-*Interface moderna com opções de login social e tema escuro.*
-
-### Página Inicial
-![Página Inicial](docs/screenshots/home.png)
-*Saudação personalizada, acesso rápido aos álbuns e seções de artistas populares.*
-
-### Buscar
-![Buscar](docs/screenshots/search.png)
-*Página de busca com categorias de gêneros musicais.*
-
-### Biblioteca
-![Biblioteca](docs/screenshots/library.png)
-*Biblioteca do usuário com playlists, álbuns salvos e músicas curtidas.*
 
 ## Arquitetura
 
