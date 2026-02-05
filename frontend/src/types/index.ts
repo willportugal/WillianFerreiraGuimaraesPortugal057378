@@ -92,6 +92,7 @@ export interface AlbumCover {
   fileSize?: number;
   isPrimary?: boolean;
   presignedUrl?: string;
+  url?: string; // Alias for presignedUrl
   createdAt?: string;
 }
 

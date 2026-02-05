@@ -6,11 +6,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Loading } from './components/ui/Loading';
+import { Layout } from './components/layout/Layout';
 
 // Lazy loading das páginas
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const ArtistsPage = lazy(() => import('./pages/ArtistsPage').then(m => ({ default: m.ArtistsPage })));
 const ArtistDetailPage = lazy(() => import('./pages/ArtistDetailPage').then(m => ({ default: m.ArtistDetailPage })));
 const ArtistFormPage = lazy(() => import('./pages/ArtistFormPage').then(m => ({ default: m.ArtistFormPage })));
@@ -18,87 +19,129 @@ const AlbumsPage = lazy(() => import('./pages/AlbumsPage').then(m => ({ default:
 const AlbumDetailPage = lazy(() => import('./pages/AlbumDetailPage').then(m => ({ default: m.AlbumDetailPage })));
 const AlbumFormPage = lazy(() => import('./pages/AlbumFormPage').then(m => ({ default: m.AlbumFormPage })));
 
+// Loading component with dark theme
+const LoadingSpinner: React.FC = () => (
+  <div className="min-h-screen bg-spotify-dark-gray flex items-center justify-center">
+    <div className="w-12 h-12 border-4 border-spotify-green border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+// Layout wrapper for protected routes
+const ProtectedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute>
+    <Layout>{children}</Layout>
+  </ProtectedRoute>
+);
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
-          <Suspense fallback={<Loading fullScreen />}>
+          <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-              {/* Protected routes */}
+              {/* Protected routes with Layout */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedLayout>
+                    <HomePage />
+                  </ProtectedLayout>
+                }
+              />
+              
               <Route
                 path="/artists"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <ArtistsPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
               <Route
                 path="/artists/new"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <ArtistFormPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
               <Route
                 path="/artists/:id"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <ArtistDetailPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
               <Route
                 path="/artists/:id/edit"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <ArtistFormPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
 
               <Route
                 path="/albums"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <AlbumsPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
               <Route
                 path="/albums/new"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <AlbumFormPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
               <Route
                 path="/albums/:id"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <AlbumDetailPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
               <Route
                 path="/albums/:id/edit"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedLayout>
                     <AlbumFormPage />
-                  </ProtectedRoute>
+                  </ProtectedLayout>
                 }
               />
 
-              {/* Default redirect */}
-              <Route path="/" element={<Navigate to="/artists" replace />} />
-              <Route path="*" element={<Navigate to="/artists" replace />} />
+              {/* Search route */}
+              <Route
+                path="/search"
+                element={
+                  <ProtectedLayout>
+                    <HomePage />
+                  </ProtectedLayout>
+                }
+              />
+
+              {/* Library route */}
+              <Route
+                path="/library"
+                element={
+                  <ProtectedLayout>
+                    <AlbumsPage />
+                  </ProtectedLayout>
+                }
+              />
+
+              {/* Catch all - redirect to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
 
@@ -112,7 +155,7 @@ const App: React.FC = () => {
             pauseOnFocusLoss
             draggable
             pauseOnHover
-            theme="light"
+            theme="dark"
           />
         </NotificationProvider>
       </AuthProvider>
