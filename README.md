@@ -1,10 +1,11 @@
-# Artist Album Management System
+# 🎵 Soundify
 
-Sistema Full-Stack para gerenciamento de artistas e álbuns musicais, desenvolvido como parte do Processo Seletivo Conjunto para Engenheiro da Computação Sênior.
+Sistema Full-Stack de gerenciamento de artistas e álbuns musicais com interface moderna inspirada em aplicativos de streaming de música.
 
 ## Índice
 
 - [Visão Geral](#visão-geral)
+- [Screenshots](#screenshots)
 - [Arquitetura](#arquitetura)
 - [Tecnologias](#tecnologias)
 - [Requisitos](#requisitos)
@@ -18,14 +19,30 @@ Sistema Full-Stack para gerenciamento de artistas e álbuns musicais, desenvolvi
 
 ## Visão Geral
 
-O sistema permite o gerenciamento completo de artistas e álbuns musicais, com relacionamento N:N entre as entidades. Inclui funcionalidades avançadas como:
+O **Soundify** é uma plataforma completa para gerenciamento de artistas e álbuns musicais, com relacionamento N:N entre as entidades. Possui uma interface moderna com tema escuro inspirada em aplicativos de streaming.
 
-- CRUD completo de artistas e álbuns
-- Upload e gerenciamento de capas de álbuns via MinIO (S3-compatible)
-- Autenticação JWT com refresh token
-- Notificações em tempo real via WebSocket
-- Rate limiting por usuário
-- Sincronização de dados de regionais via API externa
+### Principais Funcionalidades
+
+- 🎤 CRUD completo de artistas e álbuns
+- 📀 Upload e gerenciamento de capas de álbuns via MinIO (S3-compatible)
+- 🔐 Autenticação JWT com refresh token
+- 📡 Notificações em tempo real via WebSocket
+- ⚡ Rate limiting por usuário
+- 🌐 Sincronização de dados de regionais via API externa
+
+## Screenshots
+
+### Tela de Login
+Interface moderna com opções de login social e tema escuro.
+
+### Página Inicial
+Saudação personalizada, acesso rápido aos álbuns e seções de artistas populares.
+
+### Listagem de Artistas
+Cards circulares com efeito hover e botão de play.
+
+### Listagem de Álbuns
+Grid responsivo com cards de álbuns e filtros.
 
 ## Arquitetura
 
@@ -34,7 +51,7 @@ O sistema permite o gerenciamento completo de artistas e álbuns musicais, com r
 │                 │     │                 │     │                 │
 │    Frontend     │────▶│    Backend      │────▶│   PostgreSQL    │
 │  React + TS     │     │  Spring Boot    │     │                 │
-│                 │     │                 │     └─────────────────┘
+│   (Soundify)    │     │                 │     └─────────────────┘
 └─────────────────┘     │                 │
                         │                 │     ┌─────────────────┐
                         │                 │────▶│                 │
@@ -56,7 +73,7 @@ O sistema permite o gerenciamento completo de artistas e álbuns musicais, com r
 - **MinIO** - Object storage S3-compatible
 - **JWT (JJWT)** - Tokens de autenticação
 - **WebSocket (STOMP)** - Comunicação em tempo real
-- **Bucket4j** - Rate limiting
+- **Bucket4j + Caffeine** - Rate limiting com cache
 - **OpenAPI/Swagger** - Documentação da API
 - **JUnit 5 + Mockito** - Testes unitários
 
@@ -64,12 +81,12 @@ O sistema permite o gerenciamento completo de artistas e álbuns musicais, com r
 - **React 18** - Biblioteca UI
 - **TypeScript** - Tipagem estática
 - **Vite** - Build tool
-- **Tailwind CSS** - Estilização
-- **React Router v6** - Roteamento
+- **Tailwind CSS** - Estilização (tema escuro customizado)
+- **React Router v6** - Roteamento com lazy loading
 - **React Hook Form + Zod** - Formulários e validação
 - **Axios** - Cliente HTTP
 - **STOMP.js** - Cliente WebSocket
-- **Jest + Testing Library** - Testes unitários
+- **Lucide React** - Ícones modernos
 
 ### Infraestrutura
 - **Docker** - Containerização
@@ -94,8 +111,8 @@ Para desenvolvimento local:
 
 ```bash
 # Clonar o repositório
-git clone <repository-url>
-cd artist-album-management
+git clone https://github.com/willportugal/WillianFerreiraGuimaraesPortugal057378.git
+cd WillianFerreiraGuimaraesPortugal057378
 
 # Iniciar todos os serviços
 docker-compose up -d
@@ -108,8 +125,8 @@ docker-compose logs -f
 ```
 
 Após a inicialização, acesse:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8080
+- **Soundify (Frontend)**: http://localhost:3000
+- **API**: http://localhost:8080
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
 
@@ -183,13 +200,6 @@ pnpm test
 | DELETE | `/api/v1/albums/{id}/covers/{coverId}` | Remover capa |
 | PUT | `/api/v1/albums/{id}/covers/{coverId}/primary` | Definir capa principal |
 
-### Regionais
-
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
-| GET | `/api/v1/regionais` | Listar regionais |
-| POST | `/api/v1/regionais/sync` | Sincronizar com API externa |
-
 ### Health Checks
 
 | Método | Endpoint | Descrição |
@@ -234,7 +244,7 @@ curl http://localhost:8080/api/v1/artists \
 - [x] Upload de múltiplas capas por álbum (MinIO)
 - [x] URLs presigned com expiração de 30 minutos
 - [x] Autenticação JWT com refresh token
-- [x] Rate limiting (10 req/min/usuário)
+- [x] Rate limiting (10 req/min/usuário) com Caffeine Cache
 - [x] WebSocket para notificações em tempo real
 - [x] Paginação, filtros e ordenação
 - [x] Versionamento de API (/api/v1/...)
@@ -242,24 +252,30 @@ curl http://localhost:8080/api/v1/artists \
 - [x] Documentação OpenAPI/Swagger
 - [x] Health checks (liveness/readiness)
 - [x] CORS configurável
-- [x] Sincronização de regionais via API externa
+- [x] Validação de arquivos no upload
 
 ### Frontend
 
-- [x] Listagem de artistas com busca e paginação
-- [x] Detalhamento de artista com álbuns
+- [x] Interface moderna estilo streaming de música
+- [x] Tema escuro com cores customizadas
+- [x] Sidebar de navegação fixa
+- [x] Player de música (visual)
+- [x] Cards circulares para artistas
+- [x] Cards quadrados para álbuns
+- [x] Página inicial com saudação personalizada
+- [x] Listagem com busca, paginação e ordenação
 - [x] Formulários de cadastro/edição
 - [x] Upload de capas de álbuns
 - [x] Autenticação com refresh automático
 - [x] Notificações em tempo real
 - [x] Lazy loading de páginas
 - [x] Context API para gerenciamento de estado
-- [x] Design responsivo com Tailwind CSS
+- [x] Design responsivo
 
 ## Estrutura do Projeto
 
 ```
-artist-album-management/
+soundify/
 ├── backend/
 │   ├── src/
 │   │   ├── main/
@@ -272,6 +288,7 @@ artist-album-management/
 │   │   │   │   ├── repository/     # Repositórios JPA
 │   │   │   │   ├── security/       # Segurança e JWT
 │   │   │   │   ├── service/        # Serviços de negócio
+│   │   │   │   ├── validation/     # Validadores customizados
 │   │   │   │   └── websocket/      # WebSocket handlers
 │   │   │   └── resources/
 │   │   │       ├── db/migration/   # Migrations Flyway
@@ -281,18 +298,21 @@ artist-album-management/
 │   └── pom.xml
 ├── frontend/
 │   ├── src/
-│   │   ├── components/             # Componentes React
+│   │   ├── components/
+│   │   │   ├── layout/             # Layout, Sidebar, Header, Player
+│   │   │   ├── cards/              # ArtistCard, AlbumCard
+│   │   │   ├── ui/                 # Componentes UI reutilizáveis
+│   │   │   └── auth/               # Componentes de autenticação
 │   │   ├── context/                # Context API
-│   │   ├── hooks/                  # Custom hooks
 │   │   ├── pages/                  # Páginas da aplicação
 │   │   ├── services/               # Serviços (API, WebSocket)
 │   │   ├── types/                  # Tipos TypeScript
-│   │   └── utils/                  # Utilitários
+│   │   └── index.css               # Estilos globais (tema escuro)
 │   ├── Dockerfile
+│   ├── tailwind.config.js          # Configuração do tema
 │   └── package.json
 ├── docker-compose.yml
 ├── DECISIONS.md
-├── PERSONA.md
 └── README.md
 ```
 
@@ -307,7 +327,7 @@ mvn test
 
 Cobertura de testes:
 - Testes unitários para Services
-- Testes de integração para Controllers
+- Testes de Controllers
 - Mocks com Mockito
 
 ### Frontend
@@ -327,10 +347,28 @@ Cobertura de testes:
 
 Consulte o arquivo [DECISIONS.md](./DECISIONS.md) para detalhes sobre as decisões arquiteturais e técnicas tomadas durante o desenvolvimento.
 
-## Licença
+## Design System
 
-Este projeto foi desenvolvido como parte de um processo seletivo e não possui licença de uso comercial.
+### Cores
+
+| Nome | Hex | Uso |
+|------|-----|-----|
+| Background | #121212 | Fundo principal |
+| Sidebar | #000000 | Barra lateral |
+| Card | #181818 | Cards e containers |
+| Card Hover | #282828 | Hover em cards |
+| Green | #1DB954 | Cor de destaque |
+| Green Dark | #1AA34A | Hover em botões |
+| Text | #FFFFFF | Texto principal |
+| Text Gray | #B3B3B3 | Texto secundário |
+
+### Tipografia
+
+- **Fonte**: Inter (Google Fonts)
+- **Títulos**: Bold, 24-32px
+- **Corpo**: Regular, 14-16px
+- **Labels**: Medium, 12-14px
 
 ---
 
-Desenvolvido por Willian Portugal
+**Soundify** - Desenvolvido por Willian Portugal

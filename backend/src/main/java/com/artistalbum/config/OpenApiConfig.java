@@ -29,13 +29,13 @@ public class OpenApiConfig {
         
         return new OpenAPI()
                 .info(new Info()
-                        .title("Artist Album Management API")
+                        .title("Soundify API")
                         .description("API REST para gerenciamento de artistas e álbuns musicais. " +
-                                "Implementada como parte do Processo Seletivo para Engenheiro da Computação Sênior.")
+                                "Plataforma de streaming de música com interface moderna.")
                         .version("1.0.0")
                         .contact(new Contact()
-                                .name("Engenheiro Full-Stack Sênior")
-                                .email("contato@artistalbum.com"))
+                                .name("Soundify Team")
+                                .email("contato@soundify.com"))
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))

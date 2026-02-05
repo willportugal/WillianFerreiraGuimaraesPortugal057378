@@ -1,6 +1,6 @@
-# Decisões Técnicas e Arquiteturais
+# Decisões Técnicas e Arquiteturais - Soundify
 
-Este documento descreve as principais decisões técnicas tomadas durante o desenvolvimento do sistema de gerenciamento de artistas e álbuns.
+Este documento descreve as principais decisões técnicas tomadas durante o desenvolvimento do **Soundify**, plataforma de gerenciamento de artistas e álbuns musicais.
 
 ## Sumário
 
