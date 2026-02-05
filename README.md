@@ -357,3 +357,4 @@ Consulte o arquivo [DECISIONS.md](./DECISIONS.md) para detalhes sobre as decisõ
 ---
 
 **Soundify** - Desenvolvido por Willian Portugal
+
