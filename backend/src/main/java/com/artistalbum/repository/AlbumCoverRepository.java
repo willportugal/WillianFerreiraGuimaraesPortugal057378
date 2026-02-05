@@ -1,7 +1,9 @@
 package com.artistalbum.repository;
 
 import com.artistalbum.entity.AlbumCover;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +22,13 @@ public interface AlbumCoverRepository extends JpaRepository<AlbumCover, Long> {
      * Busca todas as capas de um álbum.
      */
     List<AlbumCover> findByAlbumId(Long albumId);
+
+    /**
+     * Busca todas as capas de um álbum com lock pessimista (para evitar race conditions).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM AlbumCover c WHERE c.album.id = :albumId")
+    List<AlbumCover> findByAlbumIdWithLock(@Param("albumId") Long albumId);
 
     /**
      * Busca a capa principal de um álbum.

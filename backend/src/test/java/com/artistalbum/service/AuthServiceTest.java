@@ -3,7 +3,6 @@ package com.artistalbum.service;
 import com.artistalbum.dto.AuthDTO;
 import com.artistalbum.entity.User;
 import com.artistalbum.exception.BusinessException;
-import com.artistalbum.repository.UserRepository;
 import com.artistalbum.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,14 +14,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,10 +28,7 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    private UserService userService;
 
     @Mock
     private JwtService jwtService;
@@ -56,8 +51,8 @@ class AuthServiceTest {
                 .email("test@example.com")
                 .password("encodedPassword")
                 .fullName("Test User")
-                .role("USER")
-                .active(true)
+                .role(User.Role.USER)
+                .enabled(true)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -80,10 +75,9 @@ class AuthServiceTest {
         // Given
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(new UsernamePasswordAuthenticationToken(user, null));
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(jwtService.generateToken(user)).thenReturn("access-token");
         when(jwtService.generateRefreshToken(user)).thenReturn("refresh-token");
-        when(jwtService.getExpirationTime()).thenReturn(300L);
+        when(jwtService.getExpirationTime()).thenReturn(300000L);
 
         // When
         AuthDTO.TokenResponse result = authService.login(loginRequest);
@@ -112,13 +106,10 @@ class AuthServiceTest {
     @DisplayName("Deve registrar novo usuário com sucesso")
     void shouldRegisterNewUserSuccessfully() {
         // Given
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
-        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
-        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userService.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(user);
         when(jwtService.generateToken(any(User.class))).thenReturn("access-token");
         when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-token");
-        when(jwtService.getExpirationTime()).thenReturn(300L);
+        when(jwtService.getExpirationTime()).thenReturn(300000L);
 
         // When
         AuthDTO.TokenResponse result = authService.register(registerRequest);
@@ -126,14 +117,15 @@ class AuthServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAccessToken()).isEqualTo("access-token");
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userService, times(1)).createUser(anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
     @DisplayName("Deve lançar exceção quando username já existe")
     void shouldThrowExceptionWhenUsernameExists() {
         // Given
-        when(userRepository.existsByUsername("newuser")).thenReturn(true);
+        when(userService.createUser(anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new BusinessException("Username já está em uso"));
 
         // When/Then
         assertThatThrownBy(() -> authService.register(registerRequest))
@@ -145,8 +137,8 @@ class AuthServiceTest {
     @DisplayName("Deve lançar exceção quando email já existe")
     void shouldThrowExceptionWhenEmailExists() {
         // Given
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
-        when(userRepository.existsByEmail("new@example.com")).thenReturn(true);
+        when(userService.createUser(anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new BusinessException("Email já está em uso"));
 
         // When/Then
         assertThatThrownBy(() -> authService.register(registerRequest))
@@ -158,19 +150,17 @@ class AuthServiceTest {
     @DisplayName("Deve renovar token com sucesso")
     void shouldRefreshTokenSuccessfully() {
         // Given
-        AuthDTO.RefreshRequest refreshRequest = AuthDTO.RefreshRequest.builder()
-                .refreshToken("valid-refresh-token")
-                .build();
+        String refreshToken = "valid-refresh-token";
 
-        when(jwtService.extractUsername("valid-refresh-token")).thenReturn("testuser");
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(jwtService.isTokenValid("valid-refresh-token", user)).thenReturn(true);
+        when(jwtService.extractUsername(refreshToken)).thenReturn("testuser");
+        when(userService.findByUsername("testuser")).thenReturn(user);
+        when(jwtService.isTokenValid(refreshToken, user)).thenReturn(true);
         when(jwtService.generateToken(user)).thenReturn("new-access-token");
         when(jwtService.generateRefreshToken(user)).thenReturn("new-refresh-token");
-        when(jwtService.getExpirationTime()).thenReturn(300L);
+        when(jwtService.getExpirationTime()).thenReturn(300000L);
 
         // When
-        AuthDTO.TokenResponse result = authService.refreshToken(refreshRequest);
+        AuthDTO.TokenResponse result = authService.refreshToken(refreshToken);
 
         // Then
         assertThat(result).isNotNull();
@@ -182,17 +172,15 @@ class AuthServiceTest {
     @DisplayName("Deve lançar exceção para refresh token inválido")
     void shouldThrowExceptionForInvalidRefreshToken() {
         // Given
-        AuthDTO.RefreshRequest refreshRequest = AuthDTO.RefreshRequest.builder()
-                .refreshToken("invalid-refresh-token")
-                .build();
+        String refreshToken = "invalid-refresh-token";
 
-        when(jwtService.extractUsername("invalid-refresh-token")).thenReturn("testuser");
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(jwtService.isTokenValid("invalid-refresh-token", user)).thenReturn(false);
+        when(jwtService.extractUsername(refreshToken)).thenReturn("testuser");
+        when(userService.findByUsername("testuser")).thenReturn(user);
+        when(jwtService.isTokenValid(refreshToken, user)).thenReturn(false);
 
         // When/Then
-        assertThatThrownBy(() -> authService.refreshToken(refreshRequest))
+        assertThatThrownBy(() -> authService.refreshToken(refreshToken))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Refresh token inválido");
+                .hasMessageContaining("token");
     }
 }

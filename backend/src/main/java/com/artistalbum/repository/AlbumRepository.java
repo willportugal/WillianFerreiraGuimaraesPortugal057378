@@ -47,6 +47,13 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
     List<Album> findAllWithArtistsAndCovers();
 
     /**
+     * Busca todos os álbuns com artistas e capas carregados (paginado).
+     */
+    @Query(value = "SELECT DISTINCT a FROM Album a LEFT JOIN FETCH a.artists LEFT JOIN FETCH a.covers",
+           countQuery = "SELECT COUNT(DISTINCT a) FROM Album a")
+    Page<Album> findAllWithArtistsAndCoversPageable(Pageable pageable);
+
+    /**
      * Verifica se existe álbum com o título especificado.
      */
     boolean existsByTitleIgnoreCase(String title);

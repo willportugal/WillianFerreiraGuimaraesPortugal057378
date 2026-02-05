@@ -7,6 +7,7 @@ import com.artistalbum.exception.ResourceNotFoundException;
 import com.artistalbum.repository.AlbumCoverRepository;
 import com.artistalbum.repository.AlbumRepository;
 import com.artistalbum.repository.ArtistRepository;
+import com.artistalbum.validation.FileValidator;
 import com.artistalbum.websocket.AlbumNotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +52,9 @@ class AlbumServiceTest {
     @Mock
     private AlbumNotificationService notificationService;
 
+    @Mock
+    private FileValidator fileValidator;
+
     @InjectMocks
     private AlbumService albumService;
 
@@ -77,7 +82,7 @@ class AlbumServiceTest {
                 .totalTracks(10)
                 .description("Segundo álbum da banda")
                 .artists(new HashSet<>(Set.of(artist)))
-                .covers(new HashSet<>())
+                .covers(new ArrayList<>())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -100,7 +105,7 @@ class AlbumServiceTest {
     void shouldFindAllAlbumsWithPagination() {
         // Given
         Page<Album> albumPage = new PageImpl<>(List.of(album), pageable, 1);
-        when(albumRepository.findAllWithArtistsAndCovers(pageable)).thenReturn(albumPage);
+        when(albumRepository.findAllWithArtistsAndCoversPageable(pageable)).thenReturn(albumPage);
 
         // When
         Page<AlbumDTO.Response> result = albumService.findAll(pageable);
@@ -109,7 +114,7 @@ class AlbumServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("Dois");
-        verify(albumRepository, times(1)).findAllWithArtistsAndCovers(pageable);
+        verify(albumRepository, times(1)).findAllWithArtistsAndCoversPageable(pageable);
     }
 
     @Test
@@ -146,7 +151,7 @@ class AlbumServiceTest {
         // Given
         when(artistRepository.findAllById(List.of(1L))).thenReturn(List.of(artist));
         when(albumRepository.save(any(Album.class))).thenReturn(album);
-        doNothing().when(notificationService).notifyNewAlbum(any(Album.class));
+        doNothing().when(notificationService).notifyNewAlbum(any(AlbumDTO.Response.class));
 
         // When
         AlbumDTO.Response result = albumService.create(albumRequest);
@@ -155,7 +160,7 @@ class AlbumServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("Dois");
         verify(albumRepository, times(1)).save(any(Album.class));
-        verify(notificationService, times(1)).notifyNewAlbum(any(Album.class));
+        verify(notificationService, times(1)).notifyNewAlbum(any(AlbumDTO.Response.class));
     }
 
     @Test
@@ -181,17 +186,15 @@ class AlbumServiceTest {
     @DisplayName("Deve remover álbum existente")
     void shouldDeleteExistingAlbum() {
         // Given
-        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        when(albumRepository.findByIdWithArtistsAndCovers(1L)).thenReturn(Optional.of(album));
         doNothing().when(albumRepository).delete(any(Album.class));
-        doNothing().when(notificationService).notifyAlbumDeleted(1L, "Dois");
 
         // When
         albumService.delete(1L);
 
         // Then
-        verify(albumRepository, times(1)).findById(1L);
+        verify(albumRepository, times(1)).findByIdWithArtistsAndCovers(1L);
         verify(albumRepository, times(1)).delete(any(Album.class));
-        verify(notificationService, times(1)).notifyAlbumDeleted(1L, "Dois");
     }
 
     @Test

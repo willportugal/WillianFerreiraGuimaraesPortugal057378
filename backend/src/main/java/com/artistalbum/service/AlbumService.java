@@ -8,6 +8,7 @@ import com.artistalbum.exception.ResourceNotFoundException;
 import com.artistalbum.repository.AlbumCoverRepository;
 import com.artistalbum.repository.AlbumRepository;
 import com.artistalbum.repository.ArtistRepository;
+import com.artistalbum.validation.FileValidator;
 import com.artistalbum.websocket.AlbumNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class AlbumService {
     private final AlbumCoverRepository albumCoverRepository;
     private final MinioService minioService;
     private final AlbumNotificationService notificationService;
+    private final FileValidator fileValidator;
 
     /**
      * Lista todos os álbuns com paginação.
@@ -42,7 +44,7 @@ public class AlbumService {
     @Transactional(readOnly = true)
     public Page<AlbumDTO.Response> findAll(Pageable pageable) {
         log.debug("Buscando todos os álbuns com paginação");
-        return albumRepository.findAll(pageable)
+        return albumRepository.findAllWithArtistsAndCoversPageable(pageable)
                 .map(this::toResponseWithPresignedUrls);
     }
 
@@ -193,6 +195,9 @@ public class AlbumService {
     public List<AlbumDTO.CoverResponse> uploadCovers(Long albumId, List<MultipartFile> files, boolean setPrimary) {
         log.info("Fazendo upload de {} capas para álbum ID: {}", files.size(), albumId);
 
+        // Validar arquivos antes do upload
+        fileValidator.validateFiles(files);
+
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new ResourceNotFoundException("Álbum", "id", albumId));
 
@@ -251,19 +256,21 @@ public class AlbumService {
     public AlbumDTO.CoverResponse setPrimaryCover(Long albumId, Long coverId) {
         log.info("Definindo capa {} como principal do álbum {}", coverId, albumId);
 
-        AlbumCover cover = albumCoverRepository.findById(coverId)
+        // Usar lock pessimista para evitar race conditions
+        List<AlbumCover> covers = albumCoverRepository.findByAlbumIdWithLock(albumId);
+
+        AlbumCover targetCover = covers.stream()
+                .filter(c -> c.getId().equals(coverId))
+                .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Capa", "id", coverId));
 
-        if (!cover.getAlbum().getId().equals(albumId)) {
-            throw new ResourceNotFoundException("Capa", "albumId", albumId);
-        }
+        // Remover flag de todas as capas e setar apenas na target
+        covers.forEach(c -> c.setIsPrimary(false));
+        targetCover.setIsPrimary(true);
+        albumCoverRepository.saveAll(covers);
 
-        albumCoverRepository.clearPrimaryForAlbum(albumId);
-        cover.setIsPrimary(true);
-        AlbumCover updated = albumCoverRepository.save(cover);
-
-        AlbumDTO.CoverResponse response = AlbumDTO.CoverResponse.fromEntity(updated);
-        response.setPresignedUrl(minioService.getPresignedUrl(updated.getObjectKey()));
+        AlbumDTO.CoverResponse response = AlbumDTO.CoverResponse.fromEntity(targetCover);
+        response.setPresignedUrl(minioService.getPresignedUrl(targetCover.getObjectKey()));
         return response;
     }
 
@@ -273,8 +280,9 @@ public class AlbumService {
     private AlbumDTO.Response toResponseWithPresignedUrls(Album album) {
         AlbumDTO.Response response = AlbumDTO.Response.fromEntityWithDetails(album);
         
-        if (response.getCovers() != null) {
-            response.getCovers().forEach(cover -> {
+        if (response.getCovers() != null && !response.getCovers().isEmpty()) {
+            // Gerar URLs em paralelo para melhor performance
+            response.getCovers().parallelStream().forEach(cover -> {
                 cover.setPresignedUrl(minioService.getPresignedUrl(cover.getObjectKey()));
             });
         }

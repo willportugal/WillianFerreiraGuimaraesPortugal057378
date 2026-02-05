@@ -12,7 +12,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 // Mock do matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation((query) => ({
+  value: jest.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -25,7 +25,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock do ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
+(globalThis as typeof globalThis & { ResizeObserver: unknown }).ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
