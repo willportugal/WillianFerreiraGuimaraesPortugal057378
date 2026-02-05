@@ -36,6 +36,10 @@ O **Soundify** é uma plataforma completa para gerenciamento de artistas e álbu
 
 ## Screenshots
 
+### Tela de Login
+![Tela de Login](docs/screenshots/login.png)
+*Interface moderna com opções de login social e tema escuro.*
+
 ### Página Inicial
 ![Página Inicial](docs/screenshots/home.png)
 *Saudação personalizada, acesso rápido aos álbuns e seções de artistas populares.*
